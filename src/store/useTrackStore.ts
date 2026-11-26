@@ -11,9 +11,14 @@ import type {
   TrackSummary,
 } from '../core/fit/types';
 import {
+  convertToIndoor,
+  type ConvertToIndoorOptions,
+} from '../core/transforms/convertToIndoor';
+import {
   editActivityType,
   type EditActivityTypeOptions,
 } from '../core/transforms/editActivityType';
+import { setTotalCalories, stripCalories } from '../core/transforms/editCalories';
 import {
   editTotalDistance,
   stripDistance,
@@ -23,6 +28,13 @@ import {
   applyAverageSpeed,
   type AverageSpeedOptions,
 } from '../core/transforms/editSpeed';
+import {
+  bulkDeleteField,
+  bulkFillField,
+  bulkScaleField,
+  setEntryField,
+} from '../core/transforms/rawEdit';
+import { recalculateSummaryFromRecords } from '../core/transforms/recalculateSummary';
 import { stripChannels } from '../core/transforms/stripChannels';
 
 interface HistoryEntry {
@@ -49,13 +61,44 @@ interface TrackState {
   closeDocument: () => void;
   clearError: () => void;
 
+  // Scenarios
   stripChannel: (channel: ChannelKey) => void;
   stripMultipleChannels: (channels: ChannelKey[]) => void;
   applyAverageSpeedAction: (options: AverageSpeedOptions) => void;
   editDistanceAction: (options: EditDistanceOptions) => void;
   stripDistanceAction: () => void;
   editActivityTypeAction: (options: EditActivityTypeOptions) => void;
+  setCaloriesAction: (kcal: number) => void;
+  stripCaloriesAction: () => void;
+  convertToIndoorAction: (options: ConvertToIndoorOptions) => void;
+  recalculateSummaryAction: () => void;
 
+  // Raw FIT Editor
+  setRawFieldAction: (
+    entryIndex: number,
+    mesgName: string,
+    fieldName: string,
+    value: unknown,
+  ) => void;
+  bulkDeleteFieldAction: (
+    mesgNum: number,
+    mesgName: string,
+    fieldName: string,
+  ) => void;
+  bulkFillFieldAction: (
+    mesgNum: number,
+    mesgName: string,
+    fieldName: string,
+    value: unknown,
+  ) => void;
+  bulkScaleFieldAction: (
+    mesgNum: number,
+    mesgName: string,
+    fieldName: string,
+    factor: number,
+  ) => void;
+
+  // History & UI
   undo: () => void;
   redo: () => void;
   resetToOriginal: () => void;
@@ -68,6 +111,7 @@ const CHANNEL_LABELS: Record<ChannelKey, string> = {
   elevation: 'Elevation',
   speed: 'Speed',
   heartRate: 'Heart Rate',
+  hrv: 'HRV',
   power: 'Power',
   cadence: 'Cadence',
   temperature: 'Temperature',
@@ -202,6 +246,76 @@ export const useTrackStore = create<TrackState>((set, get) => ({
         ? `Тип активности: ${options.sport} (${options.subSport})`
         : `Тип активности: ${options.sport}`;
     set(commitEntries(state, next, label));
+  },
+
+  setCaloriesAction: (kcal) => {
+    const state = get();
+    if (!state.doc) return;
+    const next = setTotalCalories(state.entries, kcal);
+    set(commitEntries(state, next, `Калории установлены: ${Math.round(kcal)} ккал`));
+  },
+
+  stripCaloriesAction: () => {
+    const state = get();
+    if (!state.doc) return;
+    const next = stripCalories(state.entries);
+    set(commitEntries(state, next, 'Удалены поля калорий'));
+  },
+
+  convertToIndoorAction: (options) => {
+    const state = get();
+    if (!state.doc) return;
+    const next = convertToIndoor(state.entries, options);
+    const label =
+      options.mode === 'treadmill'
+        ? 'Конвертация в беговую дорожку (Indoor)'
+        : 'Конвертация в велостанок (Indoor Cycling)';
+    set(commitEntries(state, next, label));
+  },
+
+  recalculateSummaryAction: () => {
+    const state = get();
+    if (!state.doc) return;
+    const next = recalculateSummaryFromRecords(state.entries);
+    set(commitEntries(state, next, 'Пересчитаны итоги session и lap из record'));
+  },
+
+  setRawFieldAction: (entryIndex, mesgName, fieldName, value) => {
+    const state = get();
+    if (!state.doc) return;
+    const next = setEntryField(state.entries, entryIndex, fieldName, value);
+    const label =
+      value === undefined || value === null || value === ''
+        ? `Удалено ${mesgName}.${fieldName}`
+        : `Изменено ${mesgName}.${fieldName}`;
+    set(commitEntries(state, next, label));
+  },
+
+  bulkDeleteFieldAction: (mesgNum, mesgName, fieldName) => {
+    const state = get();
+    if (!state.doc) return;
+    const next = bulkDeleteField(state.entries, mesgNum, fieldName);
+    set(commitEntries(state, next, `Удалено поле ${fieldName} во всех ${mesgName}`));
+  },
+
+  bulkFillFieldAction: (mesgNum, mesgName, fieldName, value) => {
+    const state = get();
+    if (!state.doc) return;
+    const next = bulkFillField(state.entries, mesgNum, fieldName, value);
+    set(commitEntries(state, next, `Заполнено ${fieldName} во всех ${mesgName}`));
+  },
+
+  bulkScaleFieldAction: (mesgNum, mesgName, fieldName, factor) => {
+    const state = get();
+    if (!state.doc) return;
+    const next = bulkScaleField(state.entries, mesgNum, fieldName, factor);
+    set(
+      commitEntries(
+        state,
+        next,
+        `Масштабировано ${fieldName} (×${factor}) во всех ${mesgName}`,
+      ),
+    );
   },
 
   undo: () => {

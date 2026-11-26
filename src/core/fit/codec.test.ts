@@ -8,6 +8,14 @@ import { stripChannels } from '../transforms/stripChannels';
 import { applyAverageSpeed } from '../transforms/editSpeed';
 import { editTotalDistance, stripDistance } from '../transforms/editDistance';
 import { editActivityType } from '../transforms/editActivityType';
+import {
+  estimateCalories,
+  setTotalCalories,
+  stripCalories,
+} from '../transforms/editCalories';
+import { convertToIndoor } from '../transforms/convertToIndoor';
+import { recalculateSummaryFromRecords } from '../transforms/recalculateSummary';
+import { bulkDeleteField, setEntryField } from '../transforms/rawEdit';
 
 describe('FIT codec & transforms round-trip', () => {
   const demoBytes = createDemoFitBytes({ pointCount: 120 });
@@ -179,5 +187,65 @@ describe('FIT codec & transforms round-trip', () => {
       expect(lap.mesg.sport).toBe('running');
       expect(lap.mesg.subSport).toBe('treadmill');
     }
+  });
+
+  it('estimates, sets, and strips calories and round-trips cleanly', () => {
+    const doc = decodeFit(demoBytes, 'demo.fit');
+    const byPower = estimateCalories(doc.entries, {
+      method: 'power',
+      weightKg: 75,
+      age: 32,
+      sex: 'male',
+    });
+    expect(byPower).toBeGreaterThan(20);
+
+    const byHr = estimateCalories(doc.entries, {
+      method: 'heartRate',
+      weightKg: 75,
+      age: 32,
+      sex: 'male',
+    });
+    expect(byHr).toBeGreaterThan(20);
+
+    const withCals = setTotalCalories(doc.entries, 420);
+    const encoded = encodeFit({
+      entries: withCals,
+      developerFields: doc.developerFields,
+    });
+    expect(encoded.warnings).toEqual([]);
+    const decoded = decodeFit(encoded.bytes);
+    expect(computeTrackSummary(decoded.entries).totalCalories).toBe(420);
+
+    const stripped = stripCalories(decoded.entries);
+    expect(computeTrackSummary(stripped).totalCalories).toBeNull();
+  });
+
+  it('converts outdoor ride to indoor treadmill and recalculates summary from records', () => {
+    const doc = decodeFit(demoBytes, 'demo.fit');
+    const indoor = convertToIndoor(doc.entries, {
+      mode: 'treadmill',
+      targetDistanceMeters: 5000,
+      speedMode: 'average',
+      syncDistanceCurve: true,
+    });
+
+    const summary = computeTrackSummary(indoor);
+    expect(summary.sport).toBe('running');
+    expect(summary.subSport).toBe('treadmill');
+    expect(summary.channels.gps.present).toBe(false);
+    expect(summary.channels.elevation.present).toBe(false);
+    expect(summary.totalDistance).toBeCloseTo(5000, 0);
+
+    // Raw edit + recalculateSummaryFromRecords
+    const sessIdx = indoor.findIndex((e) => e.mesgNum === Profile.MesgNum.SESSION);
+    const tampered = setEntryField(indoor, sessIdx, 'totalDistance', 99999);
+    expect(computeTrackSummary(tampered).totalDistance).toBe(99999);
+
+    const recomputed = recalculateSummaryFromRecords(tampered);
+    expect(computeTrackSummary(recomputed).totalDistance).toBeCloseTo(5000, 0);
+
+    const withoutHr = bulkDeleteField(recomputed, Profile.MesgNum.RECORD, 'heartRate');
+    const recomputedNoHr = recalculateSummaryFromRecords(withoutHr);
+    expect(computeTrackSummary(recomputedNoHr).channels.heartRate.present).toBe(false);
   });
 });

@@ -7,18 +7,19 @@ import {
   Map as MapIcon,
   Redo2,
   RotateCcw,
+  SlidersHorizontal,
   Undo2,
 } from 'lucide-react';
 import { DropZone } from './components/DropZone';
-import { EditPanel } from './components/EditPanel';
-import { FitInspector } from './components/FitInspector';
+import { RawFitEditor } from './components/RawFitEditor';
+import { ScenariosTab } from './components/ScenariosTab';
 import { SummaryBar } from './components/SummaryBar';
 import { TelemetryCharts } from './components/TelemetryCharts';
 import { TrackMap } from './components/TrackMap';
 import { useTrackStore } from './store/useTrackStore';
 import { formatFileSize } from './utils/format';
 
-type WorkspaceTab = 'visual' | 'inspector';
+type WorkspaceTab = 'overview' | 'scenarios' | 'raw';
 
 export function App() {
   const doc = useTrackStore((s) => s.doc);
@@ -33,7 +34,7 @@ export function App() {
   const closeDocument = useTrackStore((s) => s.closeDocument);
   const exportFit = useTrackStore((s) => s.exportFit);
 
-  const [tab, setTab] = useState<WorkspaceTab>('visual');
+  const [tab, setTab] = useState<WorkspaceTab>('overview');
 
   // Keyboard shortcuts for Undo / Redo
   useEffect(() => {
@@ -41,7 +42,8 @@ export function App() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         if (
           document.activeElement instanceof HTMLInputElement ||
-          document.activeElement instanceof HTMLTextAreaElement
+          document.activeElement instanceof HTMLTextAreaElement ||
+          document.activeElement instanceof HTMLSelectElement
         ) {
           return;
         }
@@ -77,84 +79,133 @@ export function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Top Toolbar */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur px-4 sm:px-6 py-3">
-        <div className="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0">
-              <Activity className="w-4 h-4 text-sky-400" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-slate-100 truncate">
-                  {doc.fileName}
-                </h1>
-                <span className="text-[11px] font-mono text-slate-500 shrink-0">
-                  {formatFileSize(doc.fileSize)}
-                </span>
-                {summary.sport && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
-                    {summary.sport}
-                    {summary.subSport && summary.subSport !== 'generic'
-                      ? ` · ${summary.subSport}`
-                      : ''}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur px-4 sm:px-6 pt-3">
+        <div className="max-w-[1600px] mx-auto space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0">
+                <Activity className="w-4 h-4 text-sky-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-sm font-semibold text-slate-100 truncate">
+                    {doc.fileName}
+                  </h1>
+                  <span className="text-[11px] font-mono text-slate-500 shrink-0">
+                    {formatFileSize(doc.fileSize)}
                   </span>
-                )}
+                  {summary.sport && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">
+                      {summary.sport}
+                      {summary.subSport && summary.subSport !== 'generic'
+                        ? ` · ${summary.subSport}`
+                        : ''}
+                    </span>
+                  )}
+                  {pastCount > 0 && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 font-mono">
+                      {pastCount} прав.
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-slate-500 truncate">
+                  {lastActionLabel
+                    ? lastActionLabel
+                    : `${summary.totalMesgCount} FIT сообщений · ${summary.recordCount} точек`}
+                </div>
               </div>
-              <div className="text-[11px] text-slate-500 truncate">
-                {lastActionLabel
-                  ? lastActionLabel
-                  : `${summary.totalMesgCount} FIT сообщений · ${summary.recordCount} точек`}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5">
+                <button
+                  type="button"
+                  disabled={pastCount === 0}
+                  onClick={undo}
+                  title="Отменить (Ctrl/Cmd+Z)"
+                  className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
+                >
+                  <Undo2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={futureCount === 0}
+                  onClick={redo}
+                  title="Повторить (Ctrl/Cmd+Shift+Z)"
+                  className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
+                >
+                  <Redo2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={pastCount === 0}
+                  onClick={resetToOriginal}
+                  title="Сбросить все изменения"
+                  className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
               </div>
+
+              <button
+                type="button"
+                onClick={closeDocument}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors cursor-pointer"
+              >
+                <FolderOpen className="w-3.5 h-3.5" />
+                Другой файл
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Экспорт .fit
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5">
-              <button
-                type="button"
-                disabled={pastCount === 0}
-                onClick={undo}
-                title="Отменить (Ctrl/Cmd+Z)"
-                className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
-              >
-                <Undo2 className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                disabled={futureCount === 0}
-                onClick={redo}
-                title="Повторить (Ctrl/Cmd+Shift+Z)"
-                className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
-              >
-                <Redo2 className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                disabled={pastCount === 0}
-                onClick={resetToOriginal}
-                title="Сбросить все изменения"
-                className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            </div>
-
+          {/* 3 Main Tabs */}
+          <div className="flex items-center gap-1 -mb-px">
             <button
               type="button"
-              onClick={closeDocument}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors cursor-pointer"
+              onClick={() => setTab('overview')}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                tab === 'overview'
+                  ? 'border-sky-400 text-sky-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
             >
-              <FolderOpen className="w-3.5 h-3.5" />
-              Другой файл
+              <MapIcon className="w-3.5 h-3.5" />
+              Обзор (Карта и графики)
             </button>
 
             <button
               type="button"
-              onClick={handleDownload}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold transition-colors cursor-pointer"
+              onClick={() => setTab('scenarios')}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                tab === 'scenarios'
+                  ? 'border-sky-400 text-sky-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
             >
-              <Download className="w-3.5 h-3.5" />
-              Экспорт .fit
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Сценарии
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTab('raw')}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                tab === 'raw'
+                  ? 'border-sky-400 text-sky-300'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              Сырые FIT-данные ({summary.totalMesgCount})
             </button>
           </div>
         </div>
@@ -172,48 +223,16 @@ export function App() {
 
         <SummaryBar />
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
-          <div className="space-y-4 min-w-0">
-            {/* View Tabs */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setTab('visual')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                  tab === 'visual'
-                    ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-                }`}
-              >
-                <MapIcon className="w-3.5 h-3.5" />
-                Карта и графики
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab('inspector')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                  tab === 'inspector'
-                    ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                FIT Инспектор ({summary.totalMesgCount})
-              </button>
-            </div>
-
-            {tab === 'visual' ? (
-              <div className="space-y-4">
-                <TrackMap />
-                <TelemetryCharts />
-              </div>
-            ) : (
-              <FitInspector />
-            )}
+        {tab === 'overview' && (
+          <div className="space-y-4">
+            <TrackMap />
+            <TelemetryCharts />
           </div>
+        )}
 
-          <EditPanel />
-        </div>
+        {tab === 'scenarios' && <ScenariosTab />}
+
+        {tab === 'raw' && <RawFitEditor />}
       </main>
     </div>
   );

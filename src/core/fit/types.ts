@@ -25,6 +25,7 @@ export type ChannelKey =
   | 'elevation'
   | 'speed'
   | 'heartRate'
+  | 'hrv'
   | 'power'
   | 'cadence'
   | 'temperature';
@@ -52,6 +53,7 @@ export interface TrackSummary {
   avgHeartRate: number | null; // bpm
   maxHeartRate: number | null; // bpm
   avgPower: number | null; // watts
+  totalCalories: number | null; // kcal
   recordCount: number;
   lapCount: number;
   sessionCount: number;

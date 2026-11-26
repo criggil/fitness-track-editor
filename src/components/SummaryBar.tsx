@@ -54,9 +54,11 @@ export function SummaryBar() {
   const ascentChanged =
     (summary.totalAscent ?? -1) !== (original.totalAscent ?? -1);
   const gpsChanged = summary.channels.gps.present !== original.channels.gps.present;
+  const kcalChanged =
+    (summary.totalCalories ?? -1) !== (original.totalCalories ?? -1);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
       <MetricCard
         label="Дистанция"
         value={formatDistanceKm(summary.totalDistance)}
@@ -109,6 +111,17 @@ export function SummaryBar() {
           summary.avgPower != null && summary.avgHeartRate != null
             ? `${summary.avgPower} Вт ср.`
             : `${summary.recordCount} записей`
+        }
+      />
+      <MetricCard
+        label="Калории"
+        value={
+          summary.totalCalories != null ? `${summary.totalCalories} ккал` : '—'
+        }
+        sub="session.totalCalories"
+        changed={kcalChanged}
+        originalValue={
+          original.totalCalories != null ? `${original.totalCalories} ккал` : '—'
         }
       />
     </div>

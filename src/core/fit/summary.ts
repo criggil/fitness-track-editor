@@ -49,6 +49,10 @@ export const CHANNEL_FIELD_MAP: Record<
     record: ['heartRate'],
     summary: ['avgHeartRate', 'maxHeartRate', 'minHeartRate'],
   },
+  hrv: {
+    record: [],
+    summary: [],
+  },
   power: {
     record: ['power', 'accumulatedPower', 'leftRightBalance'],
     summary: [
@@ -118,6 +122,16 @@ export function computeTrackSummary(entries: FitEntry[]): TrackSummary {
       summaryFieldCount,
     };
   }
+
+  // HRV messages are stored as standalone Profile.MesgNum.HRV messages
+  const hrvCount = entries.filter(
+    (e) => e.mesgNum === Profile.MesgNum.HRV,
+  ).length;
+  channels.hrv = {
+    present: hrvCount > 0,
+    recordCount: hrvCount,
+    summaryFieldCount: 0,
+  };
 
   // Fallback calculations from records if session fields are missing
   let totalDistance = asNumber(session?.totalDistance);
@@ -202,6 +216,7 @@ export function computeTrackSummary(entries: FitEntry[]): TrackSummary {
     avgHeartRate,
     maxHeartRate,
     avgPower,
+    totalCalories: asNumber(session?.totalCalories),
     recordCount: records.length,
     lapCount: laps.length,
     sessionCount: sessions.length,
