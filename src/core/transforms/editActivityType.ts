@@ -1,54 +1,55 @@
 import { Profile } from '@garmin/fitsdk';
+import type { TranslationKey } from '../../i18n';
 import { cloneEntries } from '../fit/codec';
 import type { FitEntry } from '../fit/types';
 
 export interface ActivityTypePreset {
   id: string;
-  label: string;
+  labelKey: TranslationKey;
   sport: string;
   subSport: string;
 }
 
 export const ACTIVITY_PRESETS: ActivityTypePreset[] = [
-  { id: 'cycling-road', label: 'Вело (шоссе)', sport: 'cycling', subSport: 'road' },
+  { id: 'cycling-road', labelKey: 'preset.cycling-road', sport: 'cycling', subSport: 'road' },
   {
     id: 'cycling-indoor',
-    label: 'Велостанок',
+    labelKey: 'preset.cycling-indoor',
     sport: 'cycling',
     subSport: 'indoorCycling',
   },
   {
     id: 'cycling-virtual',
-    label: 'Virtual Ride',
+    labelKey: 'preset.cycling-virtual',
     sport: 'cycling',
     subSport: 'virtualActivity',
   },
   {
     id: 'cycling-gravel',
-    label: 'Грэвел',
+    labelKey: 'preset.cycling-gravel',
     sport: 'cycling',
     subSport: 'gravelCycling',
   },
-  { id: 'cycling-mtb', label: 'MTB', sport: 'cycling', subSport: 'mountain' },
-  { id: 'running', label: 'Бег', sport: 'running', subSport: 'generic' },
+  { id: 'cycling-mtb', labelKey: 'preset.cycling-mtb', sport: 'cycling', subSport: 'mountain' },
+  { id: 'running', labelKey: 'preset.running', sport: 'running', subSport: 'generic' },
   {
     id: 'running-treadmill',
-    label: 'Дорожка',
+    labelKey: 'preset.running-treadmill',
     sport: 'running',
     subSport: 'treadmill',
   },
-  { id: 'running-trail', label: 'Трейл', sport: 'running', subSport: 'trail' },
-  { id: 'walking', label: 'Ходьба', sport: 'walking', subSport: 'generic' },
-  { id: 'hiking', label: 'Хайкинг', sport: 'hiking', subSport: 'generic' },
+  { id: 'running-trail', labelKey: 'preset.running-trail', sport: 'running', subSport: 'trail' },
+  { id: 'walking', labelKey: 'preset.walking', sport: 'walking', subSport: 'generic' },
+  { id: 'hiking', labelKey: 'preset.hiking', sport: 'hiking', subSport: 'generic' },
   {
     id: 'swimming-lap',
-    label: 'Бассейн',
+    labelKey: 'preset.swimming-lap',
     sport: 'swimming',
     subSport: 'lapSwimming',
   },
   {
     id: 'strength',
-    label: 'Силовая',
+    labelKey: 'preset.strength',
     sport: 'training',
     subSport: 'strengthTraining',
   },

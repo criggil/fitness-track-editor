@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import { MapPinOff } from 'lucide-react';
+import { useI18n } from '../i18n';
 import { useTrackStore } from '../store/useTrackStore';
 
 const OSM_DARK_STYLE: maplibregl.StyleSpecification = {
@@ -27,6 +28,7 @@ const OSM_DARK_STYLE: maplibregl.StyleSpecification = {
 };
 
 export function TrackMap() {
+  const { t } = useI18n();
   const projection = useTrackStore((s) => s.projection);
   const hoverElapsedSec = useTrackStore((s) => s.hoverElapsedSec);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -183,11 +185,10 @@ export function TrackMap() {
       <div className="h-[300px] rounded-2xl border border-slate-800 bg-slate-900/60 flex flex-col items-center justify-center text-center p-6">
         <MapPinOff className="w-8 h-8 text-slate-600 mb-2" />
         <p className="text-sm font-medium text-slate-300">
-          GPS-координаты отсутствуют
+          {t('map.noGpsTitle')}
         </p>
         <p className="text-xs text-slate-500 mt-1 max-w-sm">
-          В текущем FIT-файле нет GPS-точек (либо секция GPS была вырезана). Карта недоступна, но
-          остальные графики и поля FIT можно редактировать.
+          {t('map.noGpsDesc')}
         </p>
       </div>
     );
@@ -197,7 +198,9 @@ export function TrackMap() {
     <div className="relative h-[300px] rounded-2xl border border-slate-800 overflow-hidden bg-slate-900">
       <div ref={containerRef} className="w-full h-full" />
       <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300 pointer-events-none">
-        {projection?.coordinates.length.toLocaleString()} GPS-точек
+        {t('map.gpsPoints', {
+          count: projection?.coordinates.length.toLocaleString() ?? '0',
+        })}
       </div>
     </div>
   );

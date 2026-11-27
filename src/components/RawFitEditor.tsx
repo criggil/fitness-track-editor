@@ -8,6 +8,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { useI18n } from '../i18n';
 import { useTrackStore } from '../store/useTrackStore';
 import { formatFitValue } from '../utils/format';
 
@@ -92,7 +93,6 @@ function parseInputValue(
     return { ok: true, value: num };
   }
 
-  // Fallback heuristic when no profile metadata
   if (!meta) {
     const num = Number(trimmed);
     if (trimmed !== '' && Number.isFinite(num)) return { ok: true, value: num };
@@ -102,6 +102,7 @@ function parseInputValue(
 }
 
 export function RawFitEditor() {
+  const { t } = useI18n();
   const entries = useTrackStore((s) => s.entries);
   const setRawFieldAction = useTrackStore((s) => s.setRawFieldAction);
   const bulkDeleteFieldAction = useTrackStore((s) => s.bulkDeleteFieldAction);
@@ -115,12 +116,10 @@ export function RawFitEditor() {
   const [fieldQuery, setFieldQuery] = useState<string>('');
   const [page, setPage] = useState<number>(0);
 
-  // Inline editing state
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [draftValue, setDraftValue] = useState<string>('');
   const [draftError, setDraftError] = useState<boolean>(false);
 
-  // Bulk column action bar (for record / table view)
   const [bulkColumn, setBulkColumn] = useState<string | null>(null);
   const [bulkInput, setBulkInput] = useState<string>('');
 
@@ -255,10 +254,10 @@ export function RawFitEditor() {
           type="button"
           onClick={recalculateSummaryAction}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-colors cursor-pointer"
-          title="Пересчитать агрегаты session и lap на основе текущих record"
+          title={t('raw.recalcTooltip')}
         >
           <RefreshCw className="w-3.5 h-3.5 text-sky-400" />
-          Пересчитать итоги из record
+          {t('raw.recalcButton')}
         </button>
       </div>
 
@@ -270,15 +269,19 @@ export function RawFitEditor() {
             type="text"
             value={fieldQuery}
             onChange={(e) => setFieldQuery(e.target.value)}
-            placeholder="Поиск поля (например, totalCalories, speed)…"
+            placeholder={t('raw.searchPlaceholder')}
             className="w-full rounded-lg bg-slate-900 border border-slate-800 pl-8 pr-2.5 py-1.5 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-sky-500"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
           <span className="text-[11px] font-mono text-slate-500">
-            Задано: <span className="text-slate-300">{populatedSet.size}</span>
-            {totalProfileFields > 0 && <> / {totalProfileFields} в FIT Profile</>}
+            {totalProfileFields > 0
+              ? t('raw.populatedCounter', {
+                  set: populatedSet.size,
+                  total: totalProfileFields,
+                })
+              : t('raw.populatedCounterShort', { set: populatedSet.size })}
           </span>
 
           <label className="inline-flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
@@ -288,7 +291,7 @@ export function RawFitEditor() {
               onChange={(e) => setHideUnsetFields(e.target.checked)}
               className="rounded border-slate-700 bg-slate-900 text-sky-500 cursor-pointer"
             />
-            <span>Скрыть незаданные поля</span>
+            <span>{t('raw.hideUnset')}</span>
           </label>
         </div>
       </div>
@@ -297,15 +300,18 @@ export function RawFitEditor() {
       {isTableMode && bulkColumn && activeMesgNum != null && (
         <div className="border-b border-sky-500/30 bg-sky-500/10 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs font-mono text-sky-200">
-            Колонка <span className="font-semibold text-white">{bulkColumn}</span> (
-            {activeItems.length} строк {activeName})
+            {t('raw.bulkColumnInfo', {
+              column: bulkColumn,
+              count: activeItems.length,
+              mesg: activeName,
+            })}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <input
               type="text"
               value={bulkInput}
               onChange={(e) => setBulkInput(e.target.value)}
-              placeholder="Значение или множитель…"
+              placeholder={t('raw.bulkPlaceholder')}
               className="w-40 rounded-lg bg-slate-950 border border-slate-700 px-2.5 py-1 text-xs font-mono text-slate-100 focus:outline-none focus:border-sky-400"
             />
             <button
@@ -320,7 +326,7 @@ export function RawFitEditor() {
               }}
               className="px-2.5 py-1 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold cursor-pointer"
             >
-              Заполнить все
+              {t('raw.bulkFill')}
             </button>
             {isNumericMeta(fieldMetaMap.get(bulkColumn)) && (
               <button
@@ -335,7 +341,7 @@ export function RawFitEditor() {
                 }}
                 className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium cursor-pointer"
               >
-                Умножить ×
+                {t('raw.bulkMultiply')}
               </button>
             )}
             <button
@@ -348,7 +354,7 @@ export function RawFitEditor() {
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 text-xs font-medium cursor-pointer"
             >
               <Trash2 className="w-3 h-3" />
-              Удалить колонку
+              {t('raw.bulkDelete')}
             </button>
             <button
               type="button"
@@ -361,12 +367,14 @@ export function RawFitEditor() {
         </div>
       )}
 
-      {/* Mode A: Vertical Key-Value Editor for small messages (session, lap, file_id, sport, activity...) */}
+      {/* Mode A: Vertical Key-Value Editor */}
       {!isTableMode && currentItem && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {activeItems.length > 1 && (
             <div className="border-b border-slate-800/80 px-4 py-2 flex items-center gap-1.5 bg-slate-900/50 overflow-x-auto">
-              <span className="text-[11px] text-slate-500 mr-1">Запись:</span>
+              <span className="text-[11px] text-slate-500 mr-1">
+                {t('raw.itemSelector')}
+              </span>
               {activeItems.map((_, idx) => (
                 <button
                   key={idx}
@@ -390,16 +398,22 @@ export function RawFitEditor() {
           <div className="flex-1 overflow-auto">
             {columns.length === 0 ? (
               <div className="p-8 text-center text-sm text-slate-500">
-                Нет полей, подходящих под фильтр «{fieldQuery}».
+                {t('raw.noMatchingFields', { query: fieldQuery })}
               </div>
             ) : (
               <table className="w-full text-left border-collapse text-xs font-mono">
                 <thead className="sticky top-0 bg-slate-950/95 text-slate-400 border-b border-slate-800">
                   <tr>
-                    <th className="px-4 py-2 font-medium w-[260px]">Поле (FIT Profile)</th>
-                    <th className="px-3 py-2 font-medium w-[150px]">Тип / Ед.</th>
-                    <th className="px-4 py-2 font-medium">Значение (нажмите для правки)</th>
-                    <th className="px-3 py-2 font-medium w-[90px] text-right">Действие</th>
+                    <th className="px-4 py-2 font-medium w-[260px]">
+                      {t('raw.colField')}
+                    </th>
+                    <th className="px-3 py-2 font-medium w-[150px]">
+                      {t('raw.colType')}
+                    </th>
+                    <th className="px-4 py-2 font-medium">{t('raw.colValue')}</th>
+                    <th className="px-3 py-2 font-medium w-[90px] text-right">
+                      {t('raw.colAction')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -447,7 +461,7 @@ export function RawFitEditor() {
                                   onChange={(e) => setDraftValue(e.target.value)}
                                   className="rounded-lg bg-slate-950 border border-sky-500 px-2 py-1 text-xs font-mono text-slate-100 focus:outline-none"
                                 >
-                                  <option value="">— (удалить)</option>
+                                  <option value="">{t('raw.deleteOption')}</option>
                                   {enumOpts.map((opt) => (
                                     <option key={opt} value={opt}>
                                       {opt}
@@ -473,7 +487,7 @@ export function RawFitEditor() {
                                   placeholder={
                                     meta?.type === 'dateTime'
                                       ? '2026-05-10T08:00:00.000Z'
-                                      : 'Введите значение…'
+                                      : t('raw.enterValue')
                                   }
                                   className={`w-full max-w-sm rounded-lg bg-slate-950 border px-2 py-1 text-xs font-mono text-slate-100 focus:outline-none ${
                                     draftError ? 'border-rose-500' : 'border-sky-500'
@@ -484,7 +498,7 @@ export function RawFitEditor() {
                                 type="button"
                                 onClick={() => commitEdit(currentItem.entryIndex, col)}
                                 className="p-1 rounded bg-sky-500 text-slate-950 hover:bg-sky-400 cursor-pointer"
-                                title="Сохранить"
+                                title={t('common.save')}
                               >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
@@ -492,7 +506,7 @@ export function RawFitEditor() {
                                 type="button"
                                 onClick={() => setEditingKey(null)}
                                 className="p-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer"
-                                title="Отмена"
+                                title={t('common.cancel')}
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
@@ -509,7 +523,7 @@ export function RawFitEditor() {
                                 </span>
                               ) : (
                                 <span className="text-slate-600 group-hover:text-sky-400">
-                                  — добавить значение
+                                  {t('raw.addValue')}
                                 </span>
                               )}
                               <Pencil className="w-3 h-3 text-slate-600 opacity-0 group-hover:opacity-100" />
@@ -529,7 +543,7 @@ export function RawFitEditor() {
                                 )
                               }
                               className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                              title={`Удалить поле ${col}`}
+                              title={t('raw.deleteFieldTooltip', { field: col })}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -545,17 +559,17 @@ export function RawFitEditor() {
         </div>
       )}
 
-      {/* Mode B: Paginated Inline Table for record / hrv / high-volume messages */}
+      {/* Mode B: Paginated Inline Table */}
       {isTableMode && (
         <>
           <div className="flex-1 overflow-auto">
             {pageSlice.length === 0 ? (
               <div className="p-8 text-center text-sm text-slate-500">
-                Нет сообщений выбранного типа.
+                {t('raw.noMessages')}
               </div>
             ) : columns.length === 0 ? (
               <div className="p-8 text-center text-sm text-slate-500">
-                Нет полей, подходящих под фильтр «{fieldQuery}».
+                {t('raw.noMatchingFields', { query: fieldQuery })}
               </div>
             ) : (
               <table className="w-full text-left border-collapse text-xs font-mono">
@@ -583,7 +597,7 @@ export function RawFitEditor() {
                               setBulkInput('');
                             }}
                             className="hover:text-sky-300 cursor-pointer"
-                            title="Нажмите для массовых действий с колонкой (удалить / заполнить / масштабировать)"
+                            title={t('raw.colHeaderTooltip')}
                           >
                             {col}
                           </button>
@@ -633,7 +647,7 @@ export function RawFitEditor() {
                                 type="button"
                                 onClick={() => startEdit(cellKey, val)}
                                 className="w-full text-left truncate hover:text-sky-300 cursor-pointer"
-                                title="Нажмите, чтобы изменить ячейку"
+                                title={t('raw.cellTooltip')}
                               >
                                 {val != null ? (
                                   formatFitValue(val)
@@ -655,9 +669,11 @@ export function RawFitEditor() {
           {totalPages > 1 && (
             <div className="border-t border-slate-800 px-4 py-2 flex items-center justify-between text-xs text-slate-400 bg-slate-900">
               <span>
-                Показано {safePage * PAGE_SIZE + 1}–
-                {Math.min((safePage + 1) * PAGE_SIZE, activeItems.length)} из{' '}
-                {activeItems.length} · Клик по заголовку колонки — массовые действия
+                {t('raw.pagination', {
+                  from: safePage * PAGE_SIZE + 1,
+                  to: Math.min((safePage + 1) * PAGE_SIZE, activeItems.length),
+                  total: activeItems.length,
+                })}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -666,7 +682,7 @@ export function RawFitEditor() {
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   className="px-2.5 py-1 rounded bg-slate-800 disabled:opacity-40 hover:bg-slate-700 cursor-pointer"
                 >
-                  Назад
+                  {t('common.back')}
                 </button>
                 <span>
                   {safePage + 1} / {totalPages}
@@ -677,7 +693,7 @@ export function RawFitEditor() {
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   className="px-2.5 py-1 rounded bg-slate-800 disabled:opacity-40 hover:bg-slate-700 cursor-pointer"
                 >
-                  Вперёд
+                  {t('common.next')}
                 </button>
               </div>
             </div>

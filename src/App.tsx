@@ -11,17 +11,20 @@ import {
   Undo2,
 } from 'lucide-react';
 import { DropZone } from './components/DropZone';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { RawFitEditor } from './components/RawFitEditor';
 import { ScenariosTab } from './components/ScenariosTab';
 import { SummaryBar } from './components/SummaryBar';
 import { TelemetryCharts } from './components/TelemetryCharts';
 import { TrackMap } from './components/TrackMap';
+import { useI18n } from './i18n';
 import { useTrackStore } from './store/useTrackStore';
 import { formatFileSize } from './utils/format';
 
 type WorkspaceTab = 'overview' | 'scenarios' | 'raw';
 
 export function App() {
+  const { t } = useI18n();
   const doc = useTrackStore((s) => s.doc);
   const summary = useTrackStore((s) => s.summary);
   const pastCount = useTrackStore((s) => s.past.length);
@@ -36,7 +39,6 @@ export function App() {
 
   const [tab, setTab] = useState<WorkspaceTab>('overview');
 
-  // Keyboard shortcuts for Undo / Redo
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
@@ -104,25 +106,30 @@ export function App() {
                   )}
                   {pastCount > 0 && (
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 font-mono">
-                      {pastCount} прав.
+                      {t('app.editsCount', { count: pastCount })}
                     </span>
                   )}
                 </div>
                 <div className="text-[11px] text-slate-500 truncate">
                   {lastActionLabel
                     ? lastActionLabel
-                    : `${summary.totalMesgCount} FIT сообщений · ${summary.recordCount} точек`}
+                    : t('app.messagesSummary', {
+                        messages: summary.totalMesgCount,
+                        records: summary.recordCount,
+                      })}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <LanguageSwitcher />
+
               <div className="flex items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5">
                 <button
                   type="button"
                   disabled={pastCount === 0}
                   onClick={undo}
-                  title="Отменить (Ctrl/Cmd+Z)"
+                  title={t('app.undoTooltip')}
                   className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
                 >
                   <Undo2 className="w-4 h-4" />
@@ -131,7 +138,7 @@ export function App() {
                   type="button"
                   disabled={futureCount === 0}
                   onClick={redo}
-                  title="Повторить (Ctrl/Cmd+Shift+Z)"
+                  title={t('app.redoTooltip')}
                   className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
                 >
                   <Redo2 className="w-4 h-4" />
@@ -140,7 +147,7 @@ export function App() {
                   type="button"
                   disabled={pastCount === 0}
                   onClick={resetToOriginal}
-                  title="Сбросить все изменения"
+                  title={t('app.resetTooltip')}
                   className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-35 cursor-pointer"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -153,7 +160,7 @@ export function App() {
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors cursor-pointer"
               >
                 <FolderOpen className="w-3.5 h-3.5" />
-                Другой файл
+                {t('app.openAnother')}
               </button>
 
               <button
@@ -162,7 +169,7 @@ export function App() {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                Экспорт .fit
+                {t('app.exportFit')}
               </button>
             </div>
           </div>
@@ -179,7 +186,7 @@ export function App() {
               }`}
             >
               <MapIcon className="w-3.5 h-3.5" />
-              Обзор (Карта и графики)
+              {t('tab.overview')}
             </button>
 
             <button
@@ -192,7 +199,7 @@ export function App() {
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              Сценарии
+              {t('tab.scenarios')}
             </button>
 
             <button
@@ -205,7 +212,7 @@ export function App() {
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              Сырые FIT-данные ({summary.totalMesgCount})
+              {t('tab.raw', { count: summary.totalMesgCount })}
             </button>
           </div>
         </div>

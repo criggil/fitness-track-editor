@@ -24,6 +24,7 @@ import {
   type AthleteSex,
   type CalorieMethod,
 } from '../core/transforms/editCalories';
+import { useI18n, type TranslationKey } from '../i18n';
 import { useTrackStore } from '../store/useTrackStore';
 import {
   formatDistanceKm,
@@ -42,48 +43,48 @@ type ScenarioId =
 
 const STRIP_CHANNELS: {
   key: ChannelKey;
-  label: string;
-  desc: string;
+  labelKey: TranslationKey;
+  descKey: TranslationKey;
 }[] = [
   {
     key: 'gps',
-    label: 'GPS (координаты и границы)',
-    desc: 'Удаляет positionLat/Long, gpsAccuracy из record и start/end/nec/swc из lap и session.',
+    labelKey: 'scenarios.strip.ch.gps.label',
+    descKey: 'scenarios.strip.ch.gps.desc',
   },
   {
     key: 'elevation',
-    label: 'Elevation (высота и градиент)',
-    desc: 'Удаляет altitude/enhancedAltitude/grade из record и totalAscent/Descent, min/avg/maxAltitude из lap и session.',
+    labelKey: 'scenarios.strip.ch.elevation.label',
+    descKey: 'scenarios.strip.ch.elevation.desc',
   },
   {
     key: 'speed',
-    label: 'Speed (скорость)',
-    desc: 'Удаляет speed/enhancedSpeed из record и avg/maxSpeed из lap и session.',
+    labelKey: 'scenarios.strip.ch.speed.label',
+    descKey: 'scenarios.strip.ch.speed.desc',
   },
   {
     key: 'heartRate',
-    label: 'Heart Rate (пульс)',
-    desc: 'Удаляет heartRate из record, min/avg/maxHeartRate из lap/session и отдельные hr-сообщения.',
+    labelKey: 'scenarios.strip.ch.heartRate.label',
+    descKey: 'scenarios.strip.ch.heartRate.desc',
   },
   {
     key: 'hrv',
-    label: 'HRV (вариабельность ритма)',
-    desc: 'Полностью удаляет сообщения типа hrv из FIT-файла.',
+    labelKey: 'scenarios.strip.ch.hrv.label',
+    descKey: 'scenarios.strip.ch.hrv.desc',
   },
   {
     key: 'power',
-    label: 'Power (мощность)',
-    desc: 'Удаляет power, accumulatedPower, leftRightBalance и агрегаты normalizedPower, totalWork.',
+    labelKey: 'scenarios.strip.ch.power.label',
+    descKey: 'scenarios.strip.ch.power.desc',
   },
   {
     key: 'cadence',
-    label: 'Cadence (каденс)',
-    desc: 'Удаляет cadence/fractionalCadence из record и avg/maxCadence из lap и session.',
+    labelKey: 'scenarios.strip.ch.cadence.label',
+    descKey: 'scenarios.strip.ch.cadence.desc',
   },
   {
     key: 'temperature',
-    label: 'Temperature (температура)',
-    desc: 'Удаляет temperature из record и min/avg/maxTemperature из lap и session.',
+    labelKey: 'scenarios.strip.ch.temperature.label',
+    descKey: 'scenarios.strip.ch.temperature.desc',
   },
 ];
 
@@ -111,6 +112,7 @@ function loadAthleteProfile(): { weightKg: number; age: number; sex: AthleteSex 
 }
 
 export function ScenariosTab() {
+  const { t } = useI18n();
   const entries = useTrackStore((s) => s.entries);
   const summary = useTrackStore((s) => s.summary);
   const stripChannel = useTrackStore((s) => s.stripChannel);
@@ -213,50 +215,50 @@ export function ScenariosTab() {
   }[] = [
     {
       id: 'strip',
-      title: 'Вырезать секции данных',
-      subtitle: 'GPS, Elevation, Speed, HR, HRV, Power…',
+      title: t('scenarios.nav.strip.title'),
+      subtitle: t('scenarios.nav.strip.sub'),
       icon: Scissors,
       accent: 'text-rose-400',
     },
     {
       id: 'distance',
-      title: 'Коррекция дистанции',
-      subtitle: 'Масштабирование + пересчёт скорости',
+      title: t('scenarios.nav.distance.title'),
+      subtitle: t('scenarios.nav.distance.sub'),
       icon: Ruler,
       accent: 'text-violet-400',
     },
     {
       id: 'speed',
-      title: 'Средняя скорость по дистанции',
-      subtitle: 'Ровная скорость + синхронизация кривой',
+      title: t('scenarios.nav.speed.title'),
+      subtitle: t('scenarios.nav.speed.sub'),
       icon: Gauge,
       accent: 'text-sky-400',
     },
     {
       id: 'indoor',
-      title: 'Превратить в Indoor',
-      subtitle: 'Комбо: без GPS/высоты + тип + скорость',
+      title: t('scenarios.nav.indoor.title'),
+      subtitle: t('scenarios.nav.indoor.sub'),
       icon: Home,
       accent: 'text-amber-400',
     },
     {
       id: 'calories',
-      title: 'Калории (totalCalories)',
-      subtitle: 'Авторасчёт (Power/HR/Dist/MET) или вручную',
+      title: t('scenarios.nav.calories.title'),
+      subtitle: t('scenarios.nav.calories.sub'),
       icon: Flame,
       accent: 'text-orange-400',
     },
     {
       id: 'activityType',
-      title: 'Тип активности (Sport)',
-      subtitle: 'Смена sport и subSport во всех секциях',
+      title: t('scenarios.nav.activityType.title'),
+      subtitle: t('scenarios.nav.activityType.sub'),
       icon: Bike,
       accent: 'text-emerald-400',
     },
     {
       id: 'recalculate',
-      title: 'Пересчитать итоги из record',
-      subtitle: 'Синхронизация session и lap с record',
+      title: t('scenarios.nav.recalculate.title'),
+      subtitle: t('scenarios.nav.recalculate.sub'),
       icon: RefreshCw,
       accent: 'text-cyan-400',
     },
@@ -303,13 +305,10 @@ export function ScenariosTab() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-slate-100">
-                  Вырезать секции данных
+                  {t('scenarios.strip.title')}
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Удаляет выбранные каналы из <code className="text-slate-300">record</code> и
-                  одновременно очищает связанные сводные поля в{' '}
-                  <code className="text-slate-300">lap</code> и{' '}
-                  <code className="text-slate-300">session</code>.
+                  {t('scenarios.strip.desc')}
                 </p>
               </div>
               {presentCore.length > 1 && (
@@ -318,7 +317,7 @@ export function ScenariosTab() {
                   onClick={() => stripMultipleChannels(presentCore)}
                   className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-xs font-semibold text-rose-300 cursor-pointer"
                 >
-                  Вырезать GPS + Elevation + Speed
+                  {t('scenarios.strip.stripCore')}
                 </button>
               )}
             </div>
@@ -338,7 +337,7 @@ export function ScenariosTab() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-semibold text-slate-100">
-                          {ch.label}
+                          {t(ch.labelKey)}
                         </span>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
@@ -349,11 +348,11 @@ export function ScenariosTab() {
                         >
                           {stats.present
                             ? `${stats.recordCount} rec · ${stats.summaryFieldCount} sum`
-                            : 'отсутствует'}
+                            : t('scenarios.strip.missing')}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
-                        {ch.desc}
+                        {t(ch.descKey)}
                       </p>
                     </div>
                     <button
@@ -363,7 +362,7 @@ export function ScenariosTab() {
                       className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      Удалить
+                      {t('common.delete')}
                     </button>
                   </div>
                 );
@@ -376,16 +375,12 @@ export function ScenariosTab() {
           <div className="max-w-xl space-y-4">
             <div>
               <h2 className="text-base font-semibold text-slate-100">
-                Коррекция дистанции с пересчётом скорости
+                {t('scenarios.distance.title')}
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Текущая дистанция:{' '}
-                <strong className="text-slate-200">
-                  {formatDistanceKm(summary.totalDistance)}
-                </strong>
-                . Пропорционально обновляет <code className="text-slate-300">record.distance</code>,{' '}
-                <code className="text-slate-300">lap.totalDistance</code> и{' '}
-                <code className="text-slate-300">session.totalDistance</code>.
+                {t('scenarios.distance.current', {
+                  value: formatDistanceKm(summary.totalDistance),
+                })}
               </p>
             </div>
 
@@ -405,7 +400,7 @@ export function ScenariosTab() {
             >
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5">
-                  Целевая дистанция (км)
+                  {t('scenarios.distance.targetLabel')}
                 </label>
                 <input
                   type="number"
@@ -419,7 +414,7 @@ export function ScenariosTab() {
 
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5">
-                  Как пересчитать скорость:
+                  {t('scenarios.distance.policyLabel')}
                 </label>
                 <select
                   value={speedPolicy}
@@ -428,10 +423,10 @@ export function ScenariosTab() {
                   }
                   className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
                 >
-                  <option value="scale">Пропорционально отмасштабировать (сохранить профиль)</option>
-                  <option value="average">Заполнить ровной средней скоростью</option>
-                  <option value="strip">Вырезать скорость полностью</option>
-                  <option value="keep">Не трогать скорость</option>
+                  <option value="scale">{t('scenarios.distance.policy.scale')}</option>
+                  <option value="average">{t('scenarios.distance.policy.average')}</option>
+                  <option value="strip">{t('scenarios.distance.policy.strip')}</option>
+                  <option value="keep">{t('scenarios.distance.policy.keep')}</option>
                 </select>
               </div>
 
@@ -443,10 +438,7 @@ export function ScenariosTab() {
                     onChange={(e) => setSyncDistOnDistEdit(e.target.checked)}
                     className="mt-0.5 rounded border-slate-700 bg-slate-950 text-sky-500"
                   />
-                  <span>
-                    Выровнять кривую <code className="text-slate-300">record.distance</code>{' '}
-                    (чтобы Strava тоже показывала ровную скорость)
-                  </span>
+                  <span>{t('scenarios.distance.syncCurve')}</span>
                 </label>
               )}
 
@@ -455,7 +447,7 @@ export function ScenariosTab() {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold cursor-pointer"
                 >
-                  Применить новую дистанцию
+                  {t('scenarios.distance.apply')}
                 </button>
                 <button
                   type="button"
@@ -463,7 +455,7 @@ export function ScenariosTab() {
                   onClick={stripDistanceAction}
                   className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-medium disabled:opacity-35 cursor-pointer"
                 >
-                  Удалить Distance целиком
+                  {t('scenarios.distance.stripAll')}
                 </button>
               </div>
             </form>
@@ -474,12 +466,10 @@ export function ScenariosTab() {
           <div className="max-w-xl space-y-4">
             <div>
               <h2 className="text-base font-semibold text-slate-100">
-                Средняя скорость по общей дистанции
+                {t('scenarios.speed.title')}
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Заменяет все значения скорости в <code className="text-slate-300">record</code>,{' '}
-                <code className="text-slate-300">lap</code> и{' '}
-                <code className="text-slate-300">session</code> на ровную среднюю скорость.
+                {t('scenarios.speed.desc')}
               </p>
             </div>
 
@@ -493,7 +483,7 @@ export function ScenariosTab() {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Timer time
+                {t('scenarios.speed.timerTime')}
               </button>
               <button
                 type="button"
@@ -504,16 +494,16 @@ export function ScenariosTab() {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Elapsed time
+                {t('scenarios.speed.elapsedTime')}
               </button>
             </div>
 
             <div className="rounded-xl bg-slate-950/70 border border-slate-800 px-4 py-3 flex items-center justify-between text-xs">
-              <span className="text-slate-400">Расчётная средняя скорость:</span>
+              <span className="text-slate-400">{t('scenarios.speed.previewLabel')}</span>
               <span className="font-mono font-semibold text-sky-300">
                 {previewAvgMps != null
                   ? `${formatSpeedKmh(previewAvgMps)} · ${formatPaceMinKm(previewAvgMps)}`
-                  : 'Нужна дистанция'}
+                  : t('scenarios.speed.needDistance')}
               </span>
             </div>
 
@@ -524,10 +514,7 @@ export function ScenariosTab() {
                 onChange={(e) => setSyncDistOnAvgSpeed(e.target.checked)}
                 className="mt-0.5 rounded border-slate-700 bg-slate-950 text-sky-500"
               />
-              <span>
-                Синхронизировать кривую <code className="text-slate-300">record.distance</code> со
-                средней скоростью (рекомендуется для Strava)
-              </span>
+              <span>{t('scenarios.speed.syncCurve')}</span>
             </label>
 
             <div className="flex items-center gap-3">
@@ -542,7 +529,7 @@ export function ScenariosTab() {
                 }
                 className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold disabled:opacity-35 cursor-pointer"
               >
-                Выставить среднюю скорость
+                {t('scenarios.speed.apply')}
               </button>
               <button
                 type="button"
@@ -550,7 +537,7 @@ export function ScenariosTab() {
                 onClick={() => stripChannel('speed')}
                 className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-medium disabled:opacity-35 cursor-pointer"
               >
-                Вырезать скорость полностью
+                {t('scenarios.speed.stripAll')}
               </button>
             </div>
           </div>
@@ -560,12 +547,10 @@ export function ScenariosTab() {
           <div className="max-w-xl space-y-4">
             <div>
               <h2 className="text-base font-semibold text-slate-100">
-                Превратить в Indoor-тренировку (комбо-сценарий)
+                {t('scenarios.indoor.title')}
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                За один шаг вырезает <strong>GPS</strong> и <strong>Elevation</strong>, меняет тип
-                активности на велостанок или беговую дорожку, и приводит в порядок дистанцию и
-                скорость.
+                {t('scenarios.indoor.desc')}
               </p>
             </div>
 
@@ -579,7 +564,7 @@ export function ScenariosTab() {
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <div className="text-xs font-semibold">Велостанок</div>
+                <div className="text-xs font-semibold">{t('scenarios.indoor.cycling')}</div>
                 <div className="text-[11px] font-mono opacity-75 mt-0.5">
                   cycling · indoorCycling
                 </div>
@@ -593,7 +578,7 @@ export function ScenariosTab() {
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <div className="text-xs font-semibold">Беговая дорожка</div>
+                <div className="text-xs font-semibold">{t('scenarios.indoor.treadmill')}</div>
                 <div className="text-[11px] font-mono opacity-75 mt-0.5">
                   running · treadmill
                 </div>
@@ -603,7 +588,7 @@ export function ScenariosTab() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">
-                  Дистанция (км, пусто — не менять)
+                  {t('scenarios.indoor.distanceLabel')}
                 </label>
                 <input
                   type="number"
@@ -616,7 +601,7 @@ export function ScenariosTab() {
               </div>
               <div>
                 <label className="block text-xs text-slate-400 mb-1">
-                  Режим скорости
+                  {t('scenarios.indoor.speedModeLabel')}
                 </label>
                 <select
                   value={indoorSpeedMode}
@@ -625,9 +610,9 @@ export function ScenariosTab() {
                   }
                   className="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
                 >
-                  <option value="average">Выровнять в среднюю</option>
-                  <option value="strip">Вырезать скорость</option>
-                  <option value="keep">Не трогать скорость</option>
+                  <option value="average">{t('scenarios.indoor.speed.average')}</option>
+                  <option value="strip">{t('scenarios.indoor.speed.strip')}</option>
+                  <option value="keep">{t('scenarios.indoor.speed.keep')}</option>
                 </select>
               </div>
             </div>
@@ -646,7 +631,7 @@ export function ScenariosTab() {
               }}
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold cursor-pointer"
             >
-              Применить Indoor-сценарий
+              {t('scenarios.indoor.apply')}
             </button>
           </div>
         )}
@@ -655,29 +640,29 @@ export function ScenariosTab() {
           <div className="max-w-xl space-y-5">
             <div>
               <h2 className="text-base font-semibold text-slate-100">
-                Калории (<code className="text-orange-300">totalCalories</code>)
+                {t('scenarios.calories.title')}
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Текущее значение в <code className="text-slate-300">session</code>:{' '}
-                <strong className="text-slate-200">
-                  {summary.totalCalories != null
-                    ? `${summary.totalCalories} ккал`
-                    : 'не задано'}
-                </strong>
-                . При записи значение также пропорционально раскладывается по{' '}
-                <code className="text-slate-300">lap.totalCalories</code>.
+                {t('scenarios.calories.current', {
+                  value:
+                    summary.totalCalories != null
+                      ? `${summary.totalCalories} ${t('unit.kcal')}`
+                      : t('scenarios.calories.notSet'),
+                })}
               </p>
             </div>
 
             {/* Auto-estimate */}
             <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-3">
               <div className="text-xs font-semibold text-slate-200">
-                Авторасчёт по формуле
+                {t('scenarios.calories.autoTitle')}
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Вес (кг)</label>
+                  <label className="block text-[11px] text-slate-400 mb-1">
+                    {t('scenarios.calories.weight')}
+                  </label>
                   <input
                     type="number"
                     min="30"
@@ -688,7 +673,9 @@ export function ScenariosTab() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Возраст</label>
+                  <label className="block text-[11px] text-slate-400 mb-1">
+                    {t('scenarios.calories.age')}
+                  </label>
                   <input
                     type="number"
                     min="12"
@@ -699,39 +686,47 @@ export function ScenariosTab() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Пол</label>
+                  <label className="block text-[11px] text-slate-400 mb-1">
+                    {t('scenarios.calories.sex')}
+                  </label>
                   <select
                     value={sex}
                     onChange={(e) => setSex(e.target.value as AthleteSex)}
-                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs text-slate-200"
+                    className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200"
                   >
-                    <option value="male">Мужской</option>
-                    <option value="female">Женский</option>
+                    <option value="male">{t('scenarios.calories.male')}</option>
+                    <option value="female">{t('scenarios.calories.female')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-[11px] text-slate-400 mb-1">
-                  Метод расчёта
+                  {t('scenarios.calories.method')}
                 </label>
                 <select
                   value={calMethod}
                   onChange={(e) => setCalMethod(e.target.value as CalorieMethod)}
                   className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200"
                 >
-                  <option value="power">По мощности (1 кДж ≈ 1 ккал)</option>
-                  <option value="heartRate">По пульсу (Keytel 2005)</option>
-                  <option value="distance">По дистанции и весу (Margaria)</option>
-                  <option value="met">По типу активности и времени (MET)</option>
+                  <option value="power">{t('scenarios.calories.method.power')}</option>
+                  <option value="heartRate">
+                    {t('scenarios.calories.method.heartRate')}
+                  </option>
+                  <option value="distance">
+                    {t('scenarios.calories.method.distance')}
+                  </option>
+                  <option value="met">{t('scenarios.calories.method.met')}</option>
                 </select>
               </div>
 
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-slate-400">
-                  Оценка:{' '}
+                  {t('scenarios.calories.estimate')}{' '}
                   <strong className="font-mono text-orange-300">
-                    {estimatedKcal != null ? `${estimatedKcal} ккал` : 'нет данных для метода'}
+                    {estimatedKcal != null
+                      ? `${estimatedKcal} ${t('unit.kcal')}`
+                      : t('scenarios.calories.noData')}
                   </strong>
                 </span>
                 <button
@@ -742,7 +737,7 @@ export function ScenariosTab() {
                   }}
                   className="px-3.5 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-semibold disabled:opacity-35 cursor-pointer"
                 >
-                  Записать оценку
+                  {t('scenarios.calories.applyEstimate')}
                 </button>
               </div>
             </div>
@@ -751,7 +746,7 @@ export function ScenariosTab() {
             <div className="flex flex-wrap items-end gap-2">
               <div className="flex-1 min-w-[160px]">
                 <label className="block text-xs text-slate-400 mb-1">
-                  Или ввести вручную (ккал)
+                  {t('scenarios.calories.manualLabel')}
                 </label>
                 <input
                   type="number"
@@ -771,7 +766,7 @@ export function ScenariosTab() {
                 }}
                 className="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold cursor-pointer"
               >
-                Задать
+                {t('scenarios.calories.setManual')}
               </button>
               <button
                 type="button"
@@ -779,7 +774,7 @@ export function ScenariosTab() {
                 onClick={stripCaloriesAction}
                 className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-medium disabled:opacity-35 cursor-pointer"
               >
-                Удалить калории
+                {t('scenarios.calories.strip')}
               </button>
             </div>
           </div>
@@ -789,15 +784,10 @@ export function ScenariosTab() {
           <div className="max-w-xl space-y-4">
             <div>
               <h2 className="text-base font-semibold text-slate-100">
-                Тип активности (<code className="text-emerald-300">sport</code> /{' '}
-                <code className="text-emerald-300">subSport</code>)
+                {t('scenarios.activity.title')}
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Обновляет <code className="text-slate-300">sport</code> и{' '}
-                <code className="text-slate-300">subSport</code> во всех сообщениях{' '}
-                <code className="text-slate-300">session</code>,{' '}
-                <code className="text-slate-300">lap</code> и{' '}
-                <code className="text-slate-300">sport</code>.
+                {t('scenarios.activity.desc')}
               </p>
             </div>
 
@@ -823,7 +813,7 @@ export function ScenariosTab() {
                         : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    {preset.label}
+                    {t(preset.labelKey)}
                   </button>
                 );
               })}
@@ -831,7 +821,9 @@ export function ScenariosTab() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Sport</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('scenarios.activity.sport')}
+                </label>
                 <select
                   value={sportInput}
                   onChange={(e) => setSportInput(e.target.value)}
@@ -845,7 +837,9 @@ export function ScenariosTab() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Sub-sport</label>
+                <label className="block text-xs text-slate-400 mb-1">
+                  {t('scenarios.activity.subSport')}
+                </label>
                 <select
                   value={subSportInput}
                   onChange={(e) => setSubSportInput(e.target.value)}
@@ -870,7 +864,7 @@ export function ScenariosTab() {
               }
               className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold cursor-pointer"
             >
-              Применить тип активности
+              {t('scenarios.activity.apply')}
             </button>
           </div>
         )}
@@ -879,21 +873,10 @@ export function ScenariosTab() {
           <div className="max-w-xl space-y-4">
             <div>
               <h2 className="text-base font-semibold text-slate-100">
-                Пересчитать итоги <code className="text-cyan-300">session</code> и{' '}
-                <code className="text-cyan-300">lap</code> из{' '}
-                <code className="text-cyan-300">record</code>
+                {t('scenarios.recalc.title')}
               </h2>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Полезно после ручных правок в «Сырых FIT-данных» или для починки битых файлов:
-                заново вычисляет <code className="text-slate-300">totalDistance</code>,{' '}
-                <code className="text-slate-300">avg/maxSpeed</code>,{' '}
-                <code className="text-slate-300">totalAscent/Descent</code>,{' '}
-                <code className="text-slate-300">avg/maxHeartRate</code>,{' '}
-                <code className="text-slate-300">avg/maxPower</code>,{' '}
-                <code className="text-slate-300">avg/maxCadence</code> и GPS bounding box по
-                фактическим точкам <code className="text-slate-300">record</code>. Если какой-то
-                канал отсутствует в <code className="text-slate-300">record</code>, его устаревшие
-                итоги удаляются.
+                {t('scenarios.recalc.desc')}
               </p>
             </div>
 
@@ -903,7 +886,7 @@ export function ScenariosTab() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-semibold cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Пересчитать все итоги сейчас
+              {t('scenarios.recalc.apply')}
             </button>
           </div>
         )}

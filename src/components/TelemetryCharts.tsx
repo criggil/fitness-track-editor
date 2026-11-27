@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
+import { useI18n } from '../i18n';
 import { useTrackStore } from '../store/useTrackStore';
 import { formatDuration } from '../utils/format';
 
@@ -57,11 +58,15 @@ function SingleChart({
   spec,
   xMin,
   xMax,
+  timeLabel,
+  pointsMeta,
   onHoverTime,
 }: {
   spec: ChartSpec;
   xMin: number;
   xMax: number;
+  timeLabel: string;
+  pointsMeta: string;
   onHoverTime: (elapsedSec: number | null) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -112,7 +117,7 @@ function SingleChart({
       ],
       series: [
         {
-          label: 'Время',
+          label: timeLabel,
           value: (_u, v) => (v == null ? '—' : formatDuration(v)),
         },
         {
@@ -123,7 +128,7 @@ function SingleChart({
           spanGaps: true,
           points: { show: spec.xValues.length <= 2 },
           value: (_u, v) =>
-            v == null ? '—' : `${v.toFixed(spec.unit === 'км' ? 2 : 1)} ${spec.unit}`,
+            v == null ? '—' : `${v.toFixed(spec.id === 'distance' ? 2 : 1)} ${spec.unit}`,
         },
       ],
       hooks: {
@@ -160,15 +165,13 @@ function SingleChart({
       sync.unsub(plot);
       plot.destroy();
     };
-  }, [spec, xMin, xMax, onHoverTime]);
+  }, [spec, xMin, xMax, timeLabel, onHoverTime]);
 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-slate-300">{spec.title}</span>
-        <span className="text-[11px] font-mono text-slate-500">
-          {spec.pointCount.toLocaleString()} точек · {spec.unit}
-        </span>
+        <span className="text-[11px] font-mono text-slate-500">{pointsMeta}</span>
       </div>
       <div ref={wrapRef} className="w-full" />
     </div>
@@ -176,6 +179,7 @@ function SingleChart({
 }
 
 export function TelemetryCharts() {
+  const { t, locale } = useI18n();
   const projection = useTrackStore((s) => s.projection);
   const setHoverElapsedSec = useTrackStore((s) => s.setHoverElapsedSec);
 
@@ -223,8 +227,8 @@ export function TelemetryCharts() {
 
     addChart(
       'speed',
-      'Скорость',
-      'км/ч',
+      t('charts.speed'),
+      t('unit.kmh'),
       '#38bdf8',
       'rgba(56, 189, 248, 0.12)',
       projection.speed,
@@ -233,8 +237,8 @@ export function TelemetryCharts() {
 
     addChart(
       'elevation',
-      'Высота (Elevation)',
-      'м',
+      t('charts.elevation'),
+      t('unit.m'),
       '#34d399',
       'rgba(52, 211, 153, 0.12)',
       projection.altitude,
@@ -242,8 +246,8 @@ export function TelemetryCharts() {
 
     addChart(
       'distance',
-      'Дистанция',
-      'км',
+      t('charts.distance'),
+      t('unit.km'),
       '#a78bfa',
       'rgba(167, 139, 250, 0.12)',
       projection.distance,
@@ -252,8 +256,8 @@ export function TelemetryCharts() {
 
     addChart(
       'hr',
-      'Пульс',
-      'уд/м',
+      t('charts.heartRate'),
+      t('unit.bpm'),
       '#fb7185',
       'rgba(251, 113, 133, 0.12)',
       projection.heartRate,
@@ -261,20 +265,21 @@ export function TelemetryCharts() {
 
     addChart(
       'power',
-      'Мощность',
-      'Вт',
+      t('charts.power'),
+      t('unit.w'),
       '#fbbf24',
       'rgba(251, 191, 36, 0.12)',
       projection.power,
     );
 
     return { charts: list, xMin: minX, xMax: maxX };
-  }, [projection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projection, locale]);
 
   if (!projection || charts.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 text-center text-sm text-slate-500">
-        Нет числовых графиков для отображения (все каналы телеметрии отсутствуют или вырезаны).
+        {t('charts.empty')}
       </div>
     );
   }
@@ -287,6 +292,11 @@ export function TelemetryCharts() {
           spec={spec}
           xMin={xMin}
           xMax={xMax}
+          timeLabel={t('charts.time')}
+          pointsMeta={t('charts.pointsMeta', {
+            count: spec.pointCount.toLocaleString(),
+            unit: spec.unit,
+          })}
           onHoverTime={setHoverElapsedSec}
         />
       ))}

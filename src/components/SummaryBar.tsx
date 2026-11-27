@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import { useTrackStore } from '../store/useTrackStore';
 import {
   formatDistanceKm,
@@ -12,10 +13,10 @@ interface MetricCardProps {
   value: string;
   sub?: string;
   changed?: boolean;
-  originalValue?: string;
+  wasLabel?: string;
 }
 
-function MetricCard({ label, value, sub, changed, originalValue }: MetricCardProps) {
+function MetricCard({ label, value, sub, changed, wasLabel }: MetricCardProps) {
   return (
     <div
       className={`rounded-xl border px-3.5 py-2.5 transition-colors ${
@@ -30,10 +31,8 @@ function MetricCard({ label, value, sub, changed, originalValue }: MetricCardPro
       <div className="text-lg font-semibold text-slate-100 tabular-nums mt-0.5">
         {value}
       </div>
-      {changed && originalValue ? (
-        <div className="text-[11px] text-sky-400 truncate">
-          было: {originalValue}
-        </div>
+      {changed && wasLabel ? (
+        <div className="text-[11px] text-sky-400 truncate">{wasLabel}</div>
       ) : sub ? (
         <div className="text-[11px] text-slate-500 truncate">{sub}</div>
       ) : null}
@@ -42,6 +41,7 @@ function MetricCard({ label, value, sub, changed, originalValue }: MetricCardPro
 }
 
 export function SummaryBar() {
+  const { t } = useI18n();
   const summary = useTrackStore((s) => s.summary);
   const original = useTrackStore((s) => s.originalSummary);
 
@@ -60,69 +60,84 @@ export function SummaryBar() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
       <MetricCard
-        label="Дистанция"
+        label={t('summary.distance')}
         value={formatDistanceKm(summary.totalDistance)}
-        sub={`${summary.lapCount} кр.`}
+        sub={t('summary.laps', { count: summary.lapCount })}
         changed={distChanged}
-        originalValue={formatDistanceKm(original.totalDistance)}
+        wasLabel={t('summary.was', {
+          value: formatDistanceKm(original.totalDistance),
+        })}
       />
       <MetricCard
-        label="Время (таймер)"
+        label={t('summary.timerTime')}
         value={formatDuration(summary.totalTimerTime)}
-        sub={`всего: ${formatDuration(summary.totalElapsedTime)}`}
+        sub={t('summary.elapsedTime', {
+          value: formatDuration(summary.totalElapsedTime),
+        })}
       />
       <MetricCard
-        label="Ср. скорость"
+        label={t('summary.avgSpeed')}
         value={formatSpeedKmh(summary.avgSpeed)}
         sub={formatPaceMinKm(summary.avgSpeed)}
         changed={speedChanged}
-        originalValue={formatSpeedKmh(original.avgSpeed)}
+        wasLabel={t('summary.was', {
+          value: formatSpeedKmh(original.avgSpeed),
+        })}
       />
       <MetricCard
-        label="Набор высоты"
+        label={t('summary.ascent')}
         value={formatElevation(summary.totalAscent)}
         sub={
           summary.totalDescent != null
-            ? `спуск: ${formatElevation(summary.totalDescent)}`
+            ? t('summary.descent', { value: formatElevation(summary.totalDescent) })
             : summary.channels.elevation.present
-              ? 'Elevation есть'
-              : 'Elevation вырезан'
+              ? t('summary.elevationPresent')
+              : t('summary.elevationStripped')
         }
         changed={ascentChanged}
-        originalValue={formatElevation(original.totalAscent)}
+        wasLabel={t('summary.was', {
+          value: formatElevation(original.totalAscent),
+        })}
       />
       <MetricCard
-        label="GPS трек"
-        value={summary.channels.gps.present ? 'Есть' : 'Нет'}
-        sub={`${summary.channels.gps.recordCount} точек`}
+        label={t('summary.gpsTrack')}
+        value={summary.channels.gps.present ? t('common.yes') : t('common.no')}
+        sub={t('summary.points', { count: summary.channels.gps.recordCount })}
         changed={gpsChanged}
-        originalValue={original.channels.gps.present ? 'Есть' : 'Нет'}
+        wasLabel={t('summary.was', {
+          value: original.channels.gps.present ? t('common.yes') : t('common.no'),
+        })}
       />
       <MetricCard
-        label="Пульс / Мощность"
+        label={t('summary.hrPower')}
         value={
           summary.avgHeartRate != null
-            ? `${summary.avgHeartRate} уд/м`
+            ? `${summary.avgHeartRate} ${t('unit.bpm')}`
             : summary.avgPower != null
-              ? `${summary.avgPower} Вт`
+              ? `${summary.avgPower} ${t('unit.w')}`
               : '—'
         }
         sub={
           summary.avgPower != null && summary.avgHeartRate != null
-            ? `${summary.avgPower} Вт ср.`
-            : `${summary.recordCount} записей`
+            ? t('summary.avgPowerSub', { value: summary.avgPower })
+            : t('summary.recordsCount', { count: summary.recordCount })
         }
       />
       <MetricCard
-        label="Калории"
+        label={t('summary.calories')}
         value={
-          summary.totalCalories != null ? `${summary.totalCalories} ккал` : '—'
+          summary.totalCalories != null
+            ? `${summary.totalCalories} ${t('unit.kcal')}`
+            : '—'
         }
         sub="session.totalCalories"
         changed={kcalChanged}
-        originalValue={
-          original.totalCalories != null ? `${original.totalCalories} ккал` : '—'
-        }
+        wasLabel={t('summary.was', {
+          value:
+            original.totalCalories != null
+              ? `${original.totalCalories} ${t('unit.kcal')}`
+              : '—',
+        })}
       />
     </div>
   );

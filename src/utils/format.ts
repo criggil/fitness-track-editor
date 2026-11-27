@@ -1,6 +1,8 @@
+import { translate } from '../i18n';
+
 export function formatDistanceKm(meters: number | null): string {
   if (meters == null || !Number.isFinite(meters)) return '—';
-  return `${(meters / 1000).toFixed(2)} км`;
+  return `${(meters / 1000).toFixed(2)} ${translate('unit.km')}`;
 }
 
 export function formatDuration(seconds: number | null): string {
@@ -15,7 +17,7 @@ export function formatDuration(seconds: number | null): string {
 
 export function formatSpeedKmh(mps: number | null): string {
   if (mps == null || !Number.isFinite(mps)) return '—';
-  return `${(mps * 3.6).toFixed(1)} км/ч`;
+  return `${(mps * 3.6).toFixed(1)} ${translate('unit.kmh')}`;
 }
 
 export function formatPaceMinKm(mps: number | null): string {
@@ -23,12 +25,12 @@ export function formatPaceMinKm(mps: number | null): string {
   const secPerKm = 1000 / mps;
   const m = Math.floor(secPerKm / 60);
   const s = Math.round(secPerKm % 60);
-  return `${m}:${String(s).padStart(2, '0')} /км`;
+  return `${m}:${String(s).padStart(2, '0')} ${translate('unit.pace')}`;
 }
 
 export function formatElevation(meters: number | null): string {
   if (meters == null || !Number.isFinite(meters)) return '—';
-  return `${Math.round(meters)} м`;
+  return `${Math.round(meters)} ${translate('unit.m')}`;
 }
 
 export function formatFileSize(bytes: number): string {

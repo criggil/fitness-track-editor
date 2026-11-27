@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { translate } from '../i18n';
 import { cloneEntries, decodeFit, encodeFit } from '../core/fit/codec';
 import { createDemoFitBytes } from '../core/fit/demoTrack';
 import { buildTrackProjection } from '../core/fit/projection';
@@ -172,7 +173,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
         error:
           err instanceof Error
             ? err.message
-            : 'Не удалось прочитать .fit файл.',
+            : translate('store.decodeError'),
       });
     }
   },
@@ -204,14 +205,22 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const state = get();
     if (!state.doc) return;
     const next = stripChannels(state.entries, [channel]);
-    set(commitEntries(state, next, `Вырезан канал ${CHANNEL_LABELS[channel]}`));
+    set(
+      commitEntries(
+        state,
+        next,
+        translate('store.stripChannel', { channel: CHANNEL_LABELS[channel] }),
+      ),
+    );
   },
 
   stripMultipleChannels: (channels) => {
     const state = get();
     if (!state.doc || channels.length === 0) return;
     const next = stripChannels(state.entries, channels);
-    const label = `Вырезаны каналы: ${channels.map((c) => CHANNEL_LABELS[c]).join(', ')}`;
+    const label = translate('store.stripMultiple', {
+      channels: channels.map((c) => CHANNEL_LABELS[c]).join(', '),
+    });
     set(commitEntries(state, next, label));
   },
 
@@ -219,7 +228,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const state = get();
     if (!state.doc) return;
     const next = applyAverageSpeed(state.entries, options);
-    set(commitEntries(state, next, 'Установлена средняя скорость по дистанции'));
+    set(commitEntries(state, next, translate('store.avgSpeed')));
   },
 
   editDistanceAction: (options) => {
@@ -227,14 +236,14 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     if (!state.doc) return;
     const next = editTotalDistance(state.entries, options);
     const km = (options.targetDistanceMeters / 1000).toFixed(2);
-    set(commitEntries(state, next, `Дистанция изменена на ${km} км`));
+    set(commitEntries(state, next, translate('store.editDistance', { km })));
   },
 
   stripDistanceAction: () => {
     const state = get();
     if (!state.doc) return;
     const next = stripDistance(state.entries);
-    set(commitEntries(state, next, 'Удалены поля дистанции'));
+    set(commitEntries(state, next, translate('store.stripDistance')));
   },
 
   editActivityTypeAction: (options) => {
@@ -243,8 +252,11 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const next = editActivityType(state.entries, options);
     const label =
       options.subSport && options.subSport !== 'generic'
-        ? `Тип активности: ${options.sport} (${options.subSport})`
-        : `Тип активности: ${options.sport}`;
+        ? translate('store.activityTypeSub', {
+            sport: options.sport,
+            subSport: options.subSport,
+          })
+        : translate('store.activityType', { sport: options.sport });
     set(commitEntries(state, next, label));
   },
 
@@ -252,14 +264,20 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const state = get();
     if (!state.doc) return;
     const next = setTotalCalories(state.entries, kcal);
-    set(commitEntries(state, next, `Калории установлены: ${Math.round(kcal)} ккал`));
+    set(
+      commitEntries(
+        state,
+        next,
+        translate('store.setCalories', { kcal: Math.round(kcal) }),
+      ),
+    );
   },
 
   stripCaloriesAction: () => {
     const state = get();
     if (!state.doc) return;
     const next = stripCalories(state.entries);
-    set(commitEntries(state, next, 'Удалены поля калорий'));
+    set(commitEntries(state, next, translate('store.stripCalories')));
   },
 
   convertToIndoorAction: (options) => {
@@ -268,8 +286,8 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const next = convertToIndoor(state.entries, options);
     const label =
       options.mode === 'treadmill'
-        ? 'Конвертация в беговую дорожку (Indoor)'
-        : 'Конвертация в велостанок (Indoor Cycling)';
+        ? translate('store.indoorTreadmill')
+        : translate('store.indoorCycling');
     set(commitEntries(state, next, label));
   },
 
@@ -277,7 +295,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const state = get();
     if (!state.doc) return;
     const next = recalculateSummaryFromRecords(state.entries);
-    set(commitEntries(state, next, 'Пересчитаны итоги session и lap из record'));
+    set(commitEntries(state, next, translate('store.recalcSummary')));
   },
 
   setRawFieldAction: (entryIndex, mesgName, fieldName, value) => {
@@ -286,8 +304,8 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const next = setEntryField(state.entries, entryIndex, fieldName, value);
     const label =
       value === undefined || value === null || value === ''
-        ? `Удалено ${mesgName}.${fieldName}`
-        : `Изменено ${mesgName}.${fieldName}`;
+        ? translate('store.rawDelete', { mesg: mesgName, field: fieldName })
+        : translate('store.rawEdit', { mesg: mesgName, field: fieldName });
     set(commitEntries(state, next, label));
   },
 
@@ -295,14 +313,26 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const state = get();
     if (!state.doc) return;
     const next = bulkDeleteField(state.entries, mesgNum, fieldName);
-    set(commitEntries(state, next, `Удалено поле ${fieldName} во всех ${mesgName}`));
+    set(
+      commitEntries(
+        state,
+        next,
+        translate('store.bulkDelete', { mesg: mesgName, field: fieldName }),
+      ),
+    );
   },
 
   bulkFillFieldAction: (mesgNum, mesgName, fieldName, value) => {
     const state = get();
     if (!state.doc) return;
     const next = bulkFillField(state.entries, mesgNum, fieldName, value);
-    set(commitEntries(state, next, `Заполнено ${fieldName} во всех ${mesgName}`));
+    set(
+      commitEntries(
+        state,
+        next,
+        translate('store.bulkFill', { mesg: mesgName, field: fieldName }),
+      ),
+    );
   },
 
   bulkScaleFieldAction: (mesgNum, mesgName, fieldName, factor) => {
@@ -313,7 +343,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
       commitEntries(
         state,
         next,
-        `Масштабировано ${fieldName} (×${factor}) во всех ${mesgName}`,
+        translate('store.bulkScale', { mesg: mesgName, field: fieldName, factor }),
       ),
     );
   },
@@ -329,7 +359,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
       entries: prev.entries,
       summary: computeTrackSummary(prev.entries),
       projection: buildTrackProjection(prev.entries),
-      lastActionLabel: `Отменено: ${prev.label}`,
+      lastActionLabel: translate('store.undo', { label: prev.label }),
     });
   },
 
@@ -344,7 +374,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
       entries: nextItem.entries,
       summary: computeTrackSummary(nextItem.entries),
       projection: buildTrackProjection(nextItem.entries),
-      lastActionLabel: `Повторено: ${nextItem.label}`,
+      lastActionLabel: translate('store.redo', { label: nextItem.label }),
     });
   },
 
@@ -352,7 +382,7 @@ export const useTrackStore = create<TrackState>((set, get) => ({
     const state = get();
     if (!state.doc || state.past.length === 0) return;
     const restored = cloneEntries(state.originalEntries);
-    set(commitEntries(state, restored, 'Сброс к исходному файлу'));
+    set(commitEntries(state, restored, translate('store.reset')));
   },
 
   setHoverElapsedSec: (elapsedSec) => set({ hoverElapsedSec: elapsedSec }),
